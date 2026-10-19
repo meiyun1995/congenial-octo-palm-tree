@@ -1,12 +1,13 @@
 # SQL injection demonstration
 
-This is a deliberately small Flask application for learning. It exposes the
-same lookup through two endpoints:
+This is a deliberately small Flask application for learning. It originally
+demonstrated SQL injection; both endpoints are now fixed and use parameterized
+queries:
 
-- `GET /vulnerable?username=alice` builds SQL by concatenating request data.
+- `GET /vulnerable?username=alice` retains the original route name but is now safe.
 - `GET /safe?username=alice` uses a parameterized query.
 
-## Why `/vulnerable` is unsafe
+## Why the original implementation was unsafe
 
 The application treats `username` as SQL source code:
 
@@ -18,7 +19,7 @@ An attacker can supply quotes and SQL operators that change the meaning of the
 `WHERE` clause. Depending on the database account and query, this can expose,
 modify, or delete data. Error messages can also reveal database details.
 
-The safe endpoint passes the value separately:
+The fixed endpoints pass the value separately:
 
 ```python
 connection.execute("... WHERE username = ?", (username,))

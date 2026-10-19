@@ -3,8 +3,8 @@
 Run with:
     python app.py
 
-This intentionally keeps /vulnerable unsafe for training purposes. Do not use
-that endpoint as a pattern for production code.
+The original example used unsafe SQL concatenation; both lookup endpoints now
+use parameterized queries.
 """
 
 import sqlite3
@@ -34,23 +34,23 @@ def get_connection() -> sqlite3.Connection:
 
 @app.get("/vulnerable")
 def vulnerable_search():
-    """Vulnerable example: request data is concatenated into SQL."""
+    """Fixed lookup retained under its original route for compatibility."""
     username = request.args.get("username", "")
-    query = "SELECT id, username, email FROM users WHERE username = '" + username + "'"
 
     connection = get_connection()
     try:
-        rows = connection.execute(query).fetchall()
-        return jsonify({"users": [dict(row) for row in rows], "query": query})
-    except sqlite3.Error as error:
-        return jsonify({"error": str(error), "query": query}), 400
+        rows = connection.execute(
+            "SELECT id, username, email FROM users WHERE username = ?",
+            (username,),
+        ).fetchall()
+        return jsonify({"users": [dict(row) for row in rows]})
     finally:
         connection.close()
 
 
 @app.get("/safe")
 def safe_search():
-    """Safe counterpart: SQLite binds the input as a value, not SQL syntax."""
+    """Parameterized lookup: SQLite binds input as a value, not SQL syntax."""
     username = request.args.get("username", "")
     connection = get_connection()
     try:
